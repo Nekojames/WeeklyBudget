@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weekly Budget Tracker (₱)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      padding: 20px;
+    }
+    h2 {
+      color: #4caf50;
+    }
+    input[type="number"], input[type="date"] {
+      padding: 6px;
+      width: 150px;
+      margin: 5px 0;
+      background-color: #333;
+      border: 1px solid #555;
+      color: white;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      background: #4caf50;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    .results {
+      margin-top: 20px;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Weekly Budget Tracker (₱)</h2>
+    
+    <label for="weekDate">Week Starting:</label>
+    <input type="date" id="weekDate" /><br><br>
+
+    <label for="salary">Salary This Week (₱):</label>
+    <input type="number" id="salary" placeholder="Enter your salary" /><br><br>
+
+    <h3>Expenses</h3>
+    <div class="item"><span>Nanny Salary</span><input type="number" id="nanny" /></div>
+    <div class="item"><span>Electric</span><input type="number" id="electric" /></div>
+    <div class="item"><span>Internet</span><input type="number" id="internet" /></div>
+    <div class="item"><span>Pediasure</span><input type="number" id="pediasure" /></div>
+    <div class="item"><span>Baby Wipes</span><input type="number" id="babyWipes" /></div>
+    <div class="item"><span>Groceries</span><input type="number" id="groceries" /></div>
+    <div class="item"><span>Water</span><input type="number" id="water" /></div>
+    <div class="item"><span>School Food</span><input type="number" id="schoolFood" /></div>
+
+    <h3>Debts</h3>
+    <div class="item"><span>Debt 1</span><input type="number" id="debt1" /></div>
+    <div class="item"><span>Debt 2</span><input type="number" id="debt2" /></div>
+
+    <button onclick="calculateBudget()">Calculate Budget</button>
+    <button onclick="downloadSummary()">Download Summary</button>
+
+    <div class="results" id="results">
+      <p><strong>Week:</strong> <span id="dateResult">-</span></p>
+      <p><strong>Total Expenses:</strong> ₱<span id="totalExpenses">0.00</span></p>
+      <p><strong>Total Debts:</strong> ₱<span id="totalDebts">0.00</span></p>
+      <p><strong>Remaining Salary:</strong> ₱<span id="remaining">0.00</span></p>
+    </div>
+  </div>
+
+  <script>
+    function getVal(id) {
+      return parseFloat(document.getElementById(id).value) || 0;
+    }
+
+    function formatCurrency(value) {
+      return "₱" + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    function calculateBudget() {
+      const salary = getVal("salary");
+
+      const expenses = [
+        getVal("nanny"),
+        getVal("electric"),
+        getVal("internet"),
+        getVal("pediasure"),
+        getVal("babyWipes"),
+        getVal("groceries"),
+        getVal("water"),
+        getVal("schoolFood")
+      ];
+      const debts = [getVal("debt1"), getVal("debt2")];
+
+      const totalExpenses = expenses.reduce((a, b) => a + b, 0);
+      const totalDebts = debts.reduce((a, b) => a + b, 0);
+      const remaining = salary - totalExpenses - totalDebts;
+
+      document.getElementById("totalExpenses").innerText = totalExpenses.toFixed(2);
+      document.getElementById("totalDebts").innerText = totalDebts.toFixed(2);
+      document.getElementById("remaining").innerText = remaining.toFixed(2);
+
+      const date = document.getElementById("weekDate").value;
+      document.getElementById("dateResult").innerText = date || "-";
+    }
+
+    function downloadSummary() {
+      const salary = getVal("salary");
+      const date = document.getElementById("weekDate").value || "N/A";
+      const expenses = {
+        "Nanny Salary": getVal("nanny"),
+        "Electric": getVal("electric"),
+        "Internet": getVal("internet"),
+        "Pediasure": getVal("pediasure"),
+        "Baby Wipes": getVal("babyWipes"),
+        "Groceries": getVal("groceries"),
+        "Water": getVal("water"),
+        "School Food": getVal("schoolFood")
+      };
+      const debts = {
+        "Debt 1": getVal("debt1"),
+        "Debt 2": getVal("debt2")
+      };
+
+      let totalExpenses = Object.values(expenses).reduce((a, b) => a + b, 0);
+      let totalDebts = Object.values(debts).reduce((a, b) => a + b, 0);
+      let remaining = salary - totalExpenses - totalDebts;
+
+      let summary = `🧾 WEEKLY BUDGET SUMMARY\n\n📅 Week Starting: ${date}\n💰 Salary: ${formatCurrency(salary)}\n\n📌 EXPENSES:\n`;
+      for (let [key, value] of Object.entries(expenses)) {
+        summary += `- ${key}: ${formatCurrency(value)}\n`;
+      }
+      summary += `\n💸 Total Expenses: ${formatCurrency(totalExpenses)}\n\n📍 DEBTS:\n`;
+      for (let [key, value] of Object.entries(debts)) {
+        summary += `- ${key}: ${formatCurrency(value)}\n`;
+      }
+      summary += `\n🧮 Total Debts: ${formatCurrency(totalDebts)}\n\n💼 Remaining Salary: ${formatCurrency(remaining)}\n`;
+
+      const blob = new Blob([summary], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Budget_Summary_${date}.txt`;
+      link.click();
+    }
+  </script>
+</body>
+</html>
